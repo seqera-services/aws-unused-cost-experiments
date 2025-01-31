@@ -1,0 +1,124 @@
+name: Nextflow
+description: |
+  Nextflow is a workflow system for creating scalable, portable, and reproducible pipelines. It uses a Groovy-based DSL with specific syntax requirements and restrictions.
+
+file_pattern: "*.nf"
+
+rules:
+  # Nextflow scripts should use DSL2 style with clear workflow/process separation
+  - description: "Use DSL2 style with explicit workflow blocks"
+    regex_pattern: "workflow\\s*\\{[^}]+\\}"
+    good_example: |
+      workflow {
+        Channel.fromPath(params.input) | process1 | process2
+      }
+    bad_example: |
+      // DSL1 style - avoid
+      process1_ch = Channel.fromPath(params.input)
+      process1(process1_ch)
+
+  # Processes should have clear input/output declarations
+  - description: "Processes should declare inputs/outputs explicitly"
+    regex_pattern: "process\\s+\\w+\\s*\\{[^}]*input:[^}]+output:[^}]+\\}"
+    good_example: |
+      process example {
+        input:
+        path input_file
+        
+        output:
+        path "output.txt"
+        
+        script:
+        """
+        process_data.sh $input_file > output.txt
+        """
+      }
+    bad_example: |
+      process example {
+        """
+        process_data.sh input.txt > output.txt 
+        """
+      }
+
+  # Variables should be declared with def
+  - description: "Use def for variable declarations"
+    regex_pattern: "(?<!def\\s)\\w+\\s*=\\s*"
+    good_example: |
+      def x = 1
+      def meta = [:]
+    bad_example: |
+      x = 1
+      String meta = [:]
+
+  # Avoid global variables in closures
+  - description: "Use local variables in closures to prevent race conditions"
+    regex_pattern: "\\|\\s*map\\s*\\{[^}]*(?<!def\\s)\\w+\\s*=[^}]+\\}"
+    good_example: |
+      Channel.of(1,2,3) | map { it -> def x = it; x + 2 }
+    bad_example: |
+      Channel.of(1,2,3) | map { it -> x = it; x + 2 }
+
+  # Use explicit parameter declarations
+  - description: "Declare parameters explicitly with params"
+    regex_pattern: "params\\.\\w+\\s*=\\s*"
+    good_example: |
+      params.input = "/path/to/data"
+      params.threads = 4
+    bad_example: |
+      input = "/path/to/data"
+      threads = 4
+
+  # Avoid for/while loops
+  - description: "Use functional operators instead of for/while loops"
+    regex_pattern: "\\b(for|while)\\s*\\("
+    good_example: |
+      ['a','b','c'].each { item -> 
+        println item 
+      }
+    bad_example: |
+      for (item in ['a','b','c']) {
+        println item
+      }
+
+  # Use proper string syntax
+  - description: "Use supported string formats (single/double quotes, triple quotes)"
+    regex_pattern: "\\$\\/[\\s\\S]*\\/\\$"
+    good_example: |
+      """
+      echo "Hello world!"
+      """
+    bad_example: |
+      $/
+      echo "Hello world!"
+      /$
+
+  # Avoid switch statements
+  - description: "Use if-else instead of switch statements"
+    regex_pattern: "\\bswitch\\s*\\("
+    good_example: |
+      if (aligner == 'bowtie2') {
+        // bowtie2 code
+      } else if (aligner == 'bwa') {
+        // bwa code
+      }
+    bad_example: |
+      switch(aligner) {
+        case 'bowtie2':
+          // bowtie2 code
+          break
+        case 'bwa':
+          // bwa code
+          break
+      }
+
+suggestions:
+  - "Use DSL2 style with explicit workflow blocks"
+  - "Declare process inputs and outputs explicitly"
+  - "Use def for variable declarations"
+  - "Avoid global variables in closures to prevent race conditions"
+  - "Declare parameters with params"
+  - "Use functional operators instead of loops"
+  - "Use supported string formats"
+  - "Use if-else instead of switch statements"
+  - "Keep processes independent and communicate only through channels"
+  - "Use dynamic output file names only when necessary"
