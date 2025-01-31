@@ -2,7 +2,7 @@
 
 process testLoad {
 
-    container = 'quay.io/nextflow/bash'
+    container 'quay.io/nextflow/bash'
 
     output:
     val "light_done"
