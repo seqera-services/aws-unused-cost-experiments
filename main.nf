@@ -9,9 +9,7 @@ process testLoad {
     
     script:
     """
-    echo "Starting testLoad task..."
-    sleep 300  // Simulate 5 minutes of work
-    echo "testLoad task completed"
+    sleep 300
     """
 }
 
